@@ -18,7 +18,7 @@ public class ChatListener implements Listener {
         final List<MetadataValue> values = player.getMetadata("color");
 
         if (values != null && !values.isEmpty()) {
-            final MetadataValue value = values.iterator().next();
+            final MetadataValue value = values.get(0);
 
             if (value != null) {
                 final ChatColor color = ChatColor.valueOf(value.asString());

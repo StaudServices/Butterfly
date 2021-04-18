@@ -4,5 +4,5 @@
 # ChatColor Information
 CHATCOLOR:
   MENU:
-    TITLE: "&eChoose your color"
-    SIZE: 36
+    TITLE: "&eChoose your chat color!"
+    SIZE: 18

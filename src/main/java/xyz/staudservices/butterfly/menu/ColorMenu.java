@@ -4,8 +4,8 @@ import io.github.nosequel.menus.MenuHandler;
 import io.github.nosequel.menus.button.Button;
 import io.github.nosequel.menus.button.ButtonBuilder;
 import io.github.nosequel.menus.menu.Menu;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -13,26 +13,18 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import xyz.staudservices.butterfly.ButterflyPlugin;
-import xyz.staudservices.butterfly.util.CC;
+import xyz.staudservices.butterfly.util.ColorUtil;
+import xyz.staudservices.butterfly.util.WoolUtil;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class ColorMenu extends Menu {
 
-    private final ButterflyPlugin plugin;
-
-    public ColorMenu(Player player, ButterflyPlugin plugin) {
-        super(player, CC.translate(plugin.getConfig().getString("CHATCOLOR.MENU.TITLE")),
-                plugin.getConfig().getInt("CHATCOLOR.MENU.SIZE"));
-
-        this.plugin = plugin;
-    }
-
-    private final ChatColor[] colors = new ChatColor[]{
+    private final List<ChatColor> colors = Arrays.asList(
             ChatColor.DARK_RED,
             ChatColor.RED,
             ChatColor.GOLD,
@@ -48,66 +40,55 @@ public class ColorMenu extends Menu {
             ChatColor.WHITE,
             ChatColor.GRAY,
             ChatColor.DARK_GRAY,
-            ChatColor.BLACK
-    };
+            ChatColor.BLACK);
 
-    private final Map<ChatColor, DyeColor> colorMap = new HashMap<ChatColor, DyeColor>() {{
-        put(ChatColor.BLUE, DyeColor.BLUE);
-        put(ChatColor.AQUA, DyeColor.CYAN);
-        put(ChatColor.BLACK, DyeColor.BLACK);
-        put(ChatColor.DARK_AQUA, DyeColor.CYAN);
-        put(ChatColor.DARK_BLUE, DyeColor.BLUE);
-        put(ChatColor.DARK_GREEN, DyeColor.GREEN);
-        put(ChatColor.GREEN, DyeColor.LIME);
-        put(ChatColor.DARK_PURPLE, DyeColor.PURPLE);
-        put(ChatColor.LIGHT_PURPLE, DyeColor.PINK);
-        put(ChatColor.RED, DyeColor.RED);
-        put(ChatColor.DARK_RED, DyeColor.RED);
-        put(ChatColor.YELLOW, DyeColor.YELLOW);
-        put(ChatColor.WHITE, DyeColor.WHITE);
-        put(ChatColor.GOLD, DyeColor.ORANGE);
-        put(ChatColor.GRAY, DyeColor.GRAY);
-        put(ChatColor.DARK_GRAY, DyeColor.GRAY);
-    }};
+    private final ButterflyPlugin plugin;
 
+    private final String permission = "color.%s";
+
+    public ColorMenu(Player player, ButterflyPlugin plugin) {
+        super(player, ColorUtil.translate(plugin.getConfig().getString("CHATCOLOR.MENU.TITLE")), plugin.getConfig().getInt("CHATCOLOR.MENU.SIZE"));
+
+        this.plugin = plugin;
+    }
 
     @Override
     public List<Button> getButtons() {
-        final AtomicInteger index = new AtomicInteger();
         final List<Button> buttons = new ArrayList<>();
+        final AtomicInteger atomicInteger = new AtomicInteger();
 
-        for (int i = 0; i < colors.length; i++) {
-            final ChatColor color = colors[i];
-            final Function<ClickType, Boolean> action = type -> {
+        this.colors.stream()
+                .filter(ChatColor::isColor)
+                .forEach(color -> {
+                    final Function<ClickType, Boolean> action = type -> {
 
-                if (!this.getPlayer().hasPermission("color." + color.name().toLowerCase())) {
-                    this.getPlayer().sendMessage(CC.translate("No Permission."));
-                    return true;
-                }
+                        if (!this.getPlayer().hasPermission(String.format(this.permission, color.name().toLowerCase()))) {
+                            this.getPlayer().sendMessage(ChatColor.RED + "No permission.");
+                            return true;
+                        }
 
-                if (this.getPlayer().hasMetadata("color")) {
-                    this.getPlayer().removeMetadata("color", plugin);
-                }
+                        if (this.getPlayer().hasMetadata("color")) {
+                            this.getPlayer().removeMetadata("color", this.plugin);
+                        }
 
-                this.getPlayer().setMetadata("color", new FixedMetadataValue(this.plugin, color.name()));
-                this.getPlayer().closeInventory();
+                        this.getPlayer().setMetadata("color", new FixedMetadataValue(this.plugin, color.name()));
+                        this.getPlayer().closeInventory();
 
-                return true;
-            };
+                        return true;
+                    };
 
-            buttons.add(new ButtonBuilder(i, new ItemStack(Material.WOOL, 1, this.findDyeColor(color).getWoolData()))
-                    .displayName(color + color.name())
-                    .lore(
-                            CC.translate("&7Chat colors change the message"),
-                            CC.translate("&7of your messages in chat."),
-                            CC.translate(""),
-                            CC.translate("&7Preview: &f" + getPlayer().getName() + color + " Example"),
-                            CC.translate(""),
-                            CC.translate("&eClick to select this color."),
-                            CC.translate("&7&o(( &f&oLeft Click &7to equip this color!&7&o ))")
-                    )
-                    .action(action));
-        }
+                    buttons.add(new ButtonBuilder(atomicInteger.getAndIncrement(), new ItemStack(Material.WOOL, 1, (short) WoolUtil.getByColor(color)))
+                            .displayName(color + StringUtils.capitalize(color.name().toLowerCase()))
+                            .lore(
+                                    ChatColor.GRAY + "Chat colors change the color",
+                                    ChatColor.GRAY + "of your messages in chat.",
+                                    "",
+                                    ChatColor.GRAY + "Preview: " + ChatColor.WHITE + this.getPlayer() + ": " + color + "Hello world!",
+                                    "",
+                                    ChatColor.GRAY + ChatColor.STRIKETHROUGH.toString() + "(( " + ChatColor.WHITE + ChatColor.STRIKETHROUGH.toString() + "Left Click " + ChatColor.GRAY + "to equip this color!" + ChatColor.GRAY + ChatColor.STRIKETHROUGH.toString() + " ))"
+                            )
+                            .action(action));
+                });
 
         return buttons;
     }
@@ -115,15 +96,5 @@ public class ColorMenu extends Menu {
     @Override
     public void onClose(InventoryCloseEvent event) {
         MenuHandler.get().getMenus().remove(event.getPlayer());
-    }
-
-    /**
-     * Find a dye color in the color map
-     *
-     * @param color the color to get the dye color
-     * @return the dye color
-     */
-    private DyeColor findDyeColor(ChatColor color) {
-        return this.colorMap.getOrDefault(color, DyeColor.WHITE);
     }
 }
