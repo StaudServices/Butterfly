@@ -1,0 +1,8 @@
+# Butterfly Configuration File
+# Made by Staud Services
+
+# ChatColor Information
+CHATCOLOR:
+  MENU:
+    TITLE: "&eChoose your color"
+    SIZE: 36

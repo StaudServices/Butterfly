@@ -1,0 +1,4 @@
+name: Butterfly
+author: Staud
+version: ${pom.version}
+main: xyz.staudservices.butterfly.ButterflyPlugin
