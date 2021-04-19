@@ -22,9 +22,11 @@ public class ChatListener implements Listener {
 
             if (value != null) {
                 final ChatColor color = ChatColor.valueOf(value.asString());
-                final String format = event.getFormat();
 
-                event.setFormat(format.replaceFirst("(?s)(.*)" + event.getMessage(), "$1" + color.toString() + event.getMessage()));
+                final String format = event.getFormat();
+                final String message = event.getMessage().replaceAll("[\\W]", "\\\\$0").replace("%", "%%");
+
+                event.setFormat(format.replaceFirst("(?s)(.*)" + message, "$1" + color.toString() + message));
             }
         }
     }
