@@ -24,14 +24,7 @@ public class ChatListener implements Listener {
                 final ChatColor color = ChatColor.valueOf(value.asString());
                 final String format = event.getFormat();
 
-                final String name = player.getName();
-                final String newName = player.getName().replace(event.getMessage(), color + event.getMessage() + ChatColor.RESET);
-
-                String newFormat = format.replace(event.getMessage(), color + event.getMessage() + ChatColor.RESET);
-
-                newFormat = newFormat.replaceFirst(newName, name);
-
-                event.setFormat(newFormat);
+                event.setFormat(format.replaceFirst("(?s)(.*)" + event.getMessage(), "$1" + color.toString() + event.getMessage()));
             }
         }
     }
